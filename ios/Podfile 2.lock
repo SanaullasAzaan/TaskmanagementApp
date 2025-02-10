@@ -1462,11 +1462,7 @@ PODS:
   - GTMAppAuth (4.1.1):
     - AppAuth/Core (~> 1.7)
     - GTMSessionFetcher/Core (< 4.0, >= 3.3)
-  - GTMSessionFetcher (3.5.0):
-    - GTMSessionFetcher/Full (= 3.5.0)
   - GTMSessionFetcher/Core (3.5.0)
-  - GTMSessionFetcher/Full (3.5.0):
-    - GTMSessionFetcher/Core
   - leveldb-library (1.22.6)
   - nanopb (3.30910.0):
     - nanopb/decode (= 3.30910.0)
@@ -1486,7 +1482,6 @@ DEPENDENCIES:
   - firebase_core (from `.symlinks/plugins/firebase_core/ios`)
   - Flutter (from `Flutter`)
   - flutter_auth_ui (from `.symlinks/plugins/flutter_auth_ui/ios`)
-  - GTMSessionFetcher
 
 SPEC REPOS:
   trunk:
@@ -1590,6 +1585,6 @@ SPEC CHECKSUMS:
   PromisesObjC: f5707f49cb48b9636751c5b2e7d227e43fba9f47
   RecaptchaInterop: 7d1a4a01a6b2cb1610a47ef3f85f0c411434cb21
 
-PODFILE CHECKSUM: fd92342b4b8d36f25d31e284c5ddd7a9ec171b96
+PODFILE CHECKSUM: ea605269ba0aa9419767406c638618407d3d73df
 
 COCOAPODS: 1.16.2

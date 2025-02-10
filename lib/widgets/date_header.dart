@@ -11,6 +11,8 @@ class DateHeader extends ConsumerWidget {
 	final Function(DateTime) onDateSelected;
 	final ScrollController scrollController;
 	final Map<DateTime, List<Task>> tasksByDate;
+	final Function(String)? onTaskCompleted;
+	final Map<String, bool>? completedTaskIds;
 
 	const DateHeader({
 		Key? key,
@@ -18,6 +20,8 @@ class DateHeader extends ConsumerWidget {
 		required this.onDateSelected,
 		required this.scrollController,
 		required this.tasksByDate,
+		this.onTaskCompleted,
+		this.completedTaskIds,
 	}) : super(key: key);
 
 	bool _isSameDay(DateTime date1, DateTime date2) {
@@ -122,7 +126,11 @@ class DateHeader extends ConsumerWidget {
 								),
 							),
 							if (tasksForDate.isNotEmpty)
-								...tasksForDate.map((task) => TaskCard(task: task)),
+								...tasksForDate.map((task) => TaskCard(
+									task: task,
+									onTaskCompleted: onTaskCompleted,
+									isCompleted: completedTaskIds?.containsKey(task.id) ?? false,
+								)),
 						],
 					);
 				},

@@ -9,11 +9,17 @@ import '../providers/unplanned_tasks_provider.dart';
 class TaskCard extends ConsumerWidget {
 	final Task task;
 	final bool isUnplanned;
+	final Function(String)? onTaskCompleted;
+	final bool isCompleted;
+
 	const TaskCard({
 		Key? key,
 		required this.task,
 		this.isUnplanned = false,
+		this.onTaskCompleted,
+		this.isCompleted = false,
 	}) : super(key: key);
+
 
 
 	// Get gradient colors based on priority
@@ -147,12 +153,12 @@ class TaskCard extends ConsumerWidget {
 		
 		return AnimatedOpacity(
 			duration: const Duration(milliseconds: 300),
-			opacity: task.isCompleted ? 0.6 : 1.0,
+			opacity: isCompleted ? 0.6 : 1.0,
 			child: GestureDetector(
 				onTap: () => _showOptionsDialog(context, ref),
 				child: Container(
 					decoration: BoxDecoration(
-						gradient: task.isCompleted ? null : LinearGradient(
+						gradient: isCompleted ? null : LinearGradient(
 							colors: gradientColors,
 							begin: Alignment.topLeft,
 							end: Alignment.bottomRight,

@@ -17,11 +17,11 @@ class Task {
 		required this.description,
 		required this.date,
 		this.time,
-		this.subtasks = const [],
+		List<String>? subtasks,
 		this.priority,
 		this.isUnplanned = false,
 		this.isCompleted = false,
-	});
+	}) : this.subtasks = subtasks ?? [];
 
 	Task copyWith({
 		String? id,

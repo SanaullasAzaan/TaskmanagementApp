@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-class CustomAppBar extends StatelessWidget {
+class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
 	final String title;
 	final VoidCallback? onMenuTap;
 	final Color? backgroundColor;
@@ -18,28 +18,28 @@ class CustomAppBar extends StatelessWidget {
 
 	@override
 	Widget build(BuildContext context) {
-		return Container(
-			padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-			decoration: BoxDecoration(
-				color: backgroundColor ?? Colors.transparent,
-				borderRadius: const BorderRadius.only(
+		return AppBar(
+			elevation: 0,
+			backgroundColor: backgroundColor ?? Colors.transparent,
+			shape: const RoundedRectangleBorder(
+				borderRadius: BorderRadius.only(
 					bottomLeft: Radius.circular(15),
 					bottomRight: Radius.circular(15),
 				),
 			),
-			child: Row(
-				mainAxisAlignment: MainAxisAlignment.spaceBetween,
-				children: [
-					Text(
-						title,
-						style: TextStyle(
-							fontSize: 24,
-							fontWeight: FontWeight.bold,
-							color: titleColor ?? Colors.black,
-							fontFamily: 'Exo2',
-						),
-					),
-					Container(
+			title: Text(
+				title,
+				style: TextStyle(
+					fontSize: 24,
+					fontWeight: FontWeight.bold,
+					color: titleColor ?? Colors.black,
+					fontFamily: 'Exo2',
+				),
+			),
+			actions: [
+				Padding(
+					padding: const EdgeInsets.only(right: 20.0),
+					child: Container(
 						decoration: BoxDecoration(
 							color: Colors.grey.withOpacity(0.1),
 							borderRadius: BorderRadius.circular(12),
@@ -62,8 +62,11 @@ class CustomAppBar extends StatelessWidget {
 							),
 						),
 					),
-				],
-			),
+				),
+			],
 		);
 	}
+
+	@override
+	Size get preferredSize => const Size.fromHeight(kToolbarHeight);
 }

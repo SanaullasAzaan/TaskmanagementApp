@@ -37,6 +37,9 @@ target 'Runner' do
   pod 'Firebase/Auth'
   pod 'Firebase/Firestore' 
   pod 'Firebase/Messaging'  # If you need push notifications
+  
+  # ✅ Add GTMSessionFetcher
+  pod 'GTMSessionFetcher'
 
   target 'RunnerTests' do
     inherit! :search_paths

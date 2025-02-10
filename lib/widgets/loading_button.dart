@@ -11,7 +11,7 @@ class LoadingButton extends StatefulWidget {
     required this.onPressed,
     required this.text,
     this.width = double.infinity,
-    this.height = 56,
+    this.height = 56, required bool isLoading,
   });
 
   @override

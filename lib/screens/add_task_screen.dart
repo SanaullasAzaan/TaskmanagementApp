@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import '../widgets/add_task_app_bar.dart';
+import '../widgets/task_card.dart';
 import 'package:intl/intl.dart';
 import '../models/priority.dart';
 import '../models/task.dart';
+import '../services/task_service.dart';
 
 class AddTaskScreen extends StatefulWidget {
 	final DateTime selectedDate;
@@ -19,10 +21,16 @@ class AddTaskScreen extends StatefulWidget {
 }
 
 class _AddTaskScreenState extends State<AddTaskScreen> {
+	final TaskService _taskService = TaskService();
+	
+
+
 	final TextEditingController _titleController = TextEditingController();
 	final TextEditingController _descriptionController = TextEditingController();
 	final TextEditingController _subtaskController = TextEditingController();
 	final List<String> _subtasks = [];
+	final FocusNode _titleFocus = FocusNode();
+	final FocusNode _descriptionFocus = FocusNode();
 	DateTime? _selectedDate;
 
 	@override
@@ -228,49 +236,84 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
 		);
 	}
 
-	void _saveTask() {
+	Future<void> _saveTask() async {
 		if (_titleController.text.isEmpty) return;
 
-		final task = Task(
-			id: widget.taskToEdit?.id ?? DateTime.now().toString(), // Keep same ID if editing
-			title: _titleController.text,
-			description: _descriptionController.text,
-			date: _selectedDate ?? DateTime.now(), // Use current date for unplanned tasks
-			time: _selectedTime,
-			subtasks: _subtasks,
-			priority: _selectedPriority?.toString(),
-			isUnplanned: _selectedDate == null, // Add this flag for unplanned tasks
-		);
+		try {
+			final taskService = TaskService();
+			final task = Task(
+				id: widget.taskToEdit?.id ?? '',  // Empty for new tasks
+				title: _titleController.text,
+				description: _descriptionController.text,
+				date: _selectedDate ?? DateTime.now(),
+				time: _selectedTime,
+				subtasks: _subtasks,
+				priority: _selectedPriority?.toString(),
+				isUnplanned: _selectedDate == null,
+			);
 
-		Navigator.pop(context, task);
+			if (widget.taskToEdit != null) {
+				await taskService.updateTask(task);
+			} else {
+				await taskService.createTask(task);
+			}
+
+			if (mounted) {
+				ScaffoldMessenger.of(context).showSnackBar(
+					const SnackBar(content: Text('Task saved successfully!')),
+				);
+				Navigator.pop(context);
+			}
+		} catch (e) {
+			if (mounted) {
+				ScaffoldMessenger.of(context).showSnackBar(
+					SnackBar(content: Text('Failed to save task: $e')),
+				);
+			}
+		}
 	}
+
+
+
+
+
+
 
 	@override
 	void dispose() {
 		_titleController.dispose();
 		_descriptionController.dispose();
 		_subtaskController.dispose();
+		_titleFocus.dispose();
+		_descriptionFocus.dispose();
 		super.dispose();
+	}
+
+	void _unfocusAll() {
+		_titleFocus.unfocus();
+		_descriptionFocus.unfocus();
 	}
 
 	@override
 	Widget build(BuildContext context) {
-		return Scaffold(
-			backgroundColor: Colors.white,
-			body: SafeArea(
-				child: Column(
-					crossAxisAlignment: CrossAxisAlignment.start,
-					children: [
-						const AddTaskAppBar(),
-						Expanded(
-							child: SingleChildScrollView(
-								padding: const EdgeInsets.all(16),
-								child: Column(
-									crossAxisAlignment: CrossAxisAlignment.start,
-									children: [
-										TextField(
+		return GestureDetector(
+			onTap: _unfocusAll,
+			child: Scaffold(
+				backgroundColor: Colors.white,
+				appBar: const AddTaskAppBar(),
+				body: SingleChildScrollView(
+					padding: const EdgeInsets.all(16),
+					child: Column(
+						crossAxisAlignment: CrossAxisAlignment.start,
+						children: [
 
+										TextField(
 											controller: _titleController,
+											focusNode: _titleFocus,
+											textInputAction: TextInputAction.next,
+											onSubmitted: (_) {
+												FocusScope.of(context).requestFocus(_descriptionFocus);
+											},
 											style: const TextStyle(
 												fontSize: 20,
 												fontWeight: FontWeight.w600,
@@ -289,6 +332,11 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
 										const SizedBox(height: 20),
 										TextField(
 											controller: _descriptionController,
+											focusNode: _descriptionFocus,
+											textInputAction: TextInputAction.done,
+											onSubmitted: (_) {
+												_unfocusAll();
+											},
 											maxLines: null,
 											style: const TextStyle(
 												fontSize: 16,
@@ -411,54 +459,12 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
 												],
 											),
 										),
-										if (_subtasks.isNotEmpty) ...[
-											const SizedBox(height: 16),
-											ListView.builder(
-												shrinkWrap: true,
-												physics: const NeverScrollableScrollPhysics(),
-												itemCount: _subtasks.length,
-												itemBuilder: (context, index) {
-													return Padding(
-														padding: const EdgeInsets.only(bottom: 8.0),
-														child: Row(
-															children: [
-																const Icon(
-																	Icons.check_box_outline_blank,
-																	size: 20,
-																	color: Colors.black54,
-																),
-																const SizedBox(width: 8),
-																Expanded(
-																	child: Text(
-																		_subtasks[index],
-																		style: const TextStyle(
-																			fontSize: 14,
-																			color: Colors.black87,
-																		),
-																	),
-																),
-																IconButton(
-																	icon: const Icon(
-																		Icons.close,
-																		size: 18,
-																		color: Colors.black54,
-																	),
-																	onPressed: () {
-																		setState(() {
-																			_subtasks.removeAt(index);
-																		});
-																	},
-																),
-															],
-														),
-													);
-												},
-											),
-										],
-										const SizedBox(height: 12),
+										const SizedBox(height: 24),
+
+
 										TextButton(
 											onPressed: () {
-												Navigator.pop(context); // Close the add task screen
+												Navigator.pop(context);
 											},
 											style: TextButton.styleFrom(
 												padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -491,15 +497,13 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
 									],
 								),
 							),
+							floatingActionButton: FloatingActionButton(
+								onPressed: _saveTask,
+								backgroundColor: Theme.of(context).primaryColor,
+								child: const Icon(Icons.check, color: Colors.white),
+							),
 						),
-					],
-				),
-			),
-			floatingActionButton: FloatingActionButton(
-				onPressed: _saveTask,
-				backgroundColor: Theme.of(context).primaryColor,
-				child: const Icon(Icons.check, color: Colors.white),
-			),
-		);
-	}
+					);
+				}
+
 }
