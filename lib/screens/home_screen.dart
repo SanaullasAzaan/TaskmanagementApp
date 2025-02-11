@@ -77,6 +77,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProvid
 				child: Column(
 					children: [
 						Expanded(
+              //Displaying Firestore Data
 							child: StreamBuilder<List<Task>>(
 								stream: _taskService.getPlannedTasks(),
 								builder: (context, snapshot) {

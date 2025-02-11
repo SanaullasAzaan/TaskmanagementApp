@@ -1,3 +1,4 @@
+//for representing a task in the app
 import 'package:flutter/material.dart';
 
 class Task {

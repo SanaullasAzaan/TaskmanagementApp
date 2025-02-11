@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:ui';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/task.dart';
 import '../models/priority.dart';
@@ -6,7 +7,7 @@ import '../screens/add_task_screen.dart';
 import '../providers/task_provider.dart';
 import '../providers/unplanned_tasks_provider.dart';
 
-class TaskCard extends ConsumerWidget {
+class TaskCard extends ConsumerStatefulWidget {
 	final Task task;
 	final bool isUnplanned;
 	final Function(String)? onTaskCompleted;
@@ -19,6 +20,85 @@ class TaskCard extends ConsumerWidget {
 		this.onTaskCompleted,
 		this.isCompleted = false,
 	}) : super(key: key);
+
+	@override
+	ConsumerState<TaskCard> createState() => _TaskCardState();
+}
+
+class _TaskCardState extends ConsumerState<TaskCard> with SingleTickerProviderStateMixin {
+	late AnimationController _animationController;
+	late Animation<Offset> _slideAnimation;
+	late Animation<double> _fadeAnimation;
+	bool _isCompleted = false;
+
+	@override
+	void initState() {
+		super.initState();
+		_isCompleted = widget.isCompleted;
+		_animationController = AnimationController(
+			duration: const Duration(milliseconds: 300),
+			vsync: this,
+		);
+
+		_slideAnimation = Tween<Offset>(
+			begin: Offset.zero,
+			end: const Offset(-1.5, 0),
+		).animate(CurvedAnimation(
+			parent: _animationController,
+			curve: Curves.easeOut,
+		));
+
+		_fadeAnimation = Tween<double>(
+			begin: 1.0,
+			end: 0.0,
+		).animate(CurvedAnimation(
+			parent: _animationController,
+			curve: Curves.easeOut,
+		));
+	}
+
+	@override
+	void dispose() {
+		_animationController.dispose();
+		super.dispose();
+	}
+
+	Future<void> _deleteTask() async {
+		await _animationController.forward();
+		if (widget.isUnplanned) {
+			ref.read(unplannedTasksProvider.notifier).removeTask(widget.task);
+		} else {
+			ref.read(taskProvider.notifier).removeTask(widget.task);
+		}
+	}
+
+	Future<void> _showDeleteConfirmation(BuildContext context) async {
+		return showDialog(
+			context: context,
+			builder: (BuildContext context) {
+				return AlertDialog(
+					title: const Text('Delete Task'),
+					content: const Text('Are you sure you want to delete this task?'),
+					actions: [
+						TextButton(
+							onPressed: () => Navigator.pop(context),
+							child: const Text('Cancel'),
+						),
+						TextButton(
+							onPressed: () {
+								Navigator.pop(context);
+								_deleteTask();
+							},
+							child: const Text(
+								'Delete',
+								style: TextStyle(color: Colors.red),
+							),
+						),
+					],
+				);
+			},
+		);
+	}
 
 
 
@@ -39,7 +119,7 @@ class TaskCard extends ConsumerWidget {
 	}
 
 	Future<void> _showOptionsDialog(BuildContext context, WidgetRef ref) async {
-		if (task.isCompleted) return;
+		if (_isCompleted) return;
 
 		await showDialog(
 			context: context,
@@ -58,12 +138,15 @@ class TaskCard extends ConsumerWidget {
 								title: 'Mark as Complete',
 								onTap: () {
 									Navigator.pop(dialogContext);
-									final updatedTask = task.copyWith(isCompleted: true);
-									if (isUnplanned) {
-										ref.read(unplannedTasksProvider.notifier).updateTask(task, updatedTask);
+									final updatedTask = widget.task.copyWith(isCompleted: true);
+									if (widget.isUnplanned) {
+										ref.read(unplannedTasksProvider.notifier).updateTask(widget.task, updatedTask);
 									} else {
-										ref.read(taskProvider.notifier).updateTask(task, updatedTask);
+										ref.read(taskProvider.notifier).updateTask(widget.task, updatedTask);
 									}
+									setState(() {
+										_isCompleted = true;
+									});
 								},
 							),
 							const Divider(height: 1),
@@ -78,16 +161,16 @@ class TaskCard extends ConsumerWidget {
 										context,
 										MaterialPageRoute(
 											builder: (context) => AddTaskScreen(
-												selectedDate: task.date,
-												taskToEdit: task,
+												selectedDate: widget.task.date,
+												taskToEdit: widget.task,
 											),
 										),
 									);
 									if (editedTask != null) {
-										if (isUnplanned) {
-											ref.read(unplannedTasksProvider.notifier).updateTask(task, editedTask);
+										if (widget.isUnplanned) {
+											ref.read(unplannedTasksProvider.notifier).updateTask(widget.task, editedTask);
 										} else {
-											ref.read(taskProvider.notifier).updateTask(task, editedTask);
+											ref.read(taskProvider.notifier).updateTask(widget.task, editedTask);
 										}
 									}
 								},
@@ -100,11 +183,7 @@ class TaskCard extends ConsumerWidget {
 								title: 'Delete Task',
 								onTap: () {
 									Navigator.pop(dialogContext);
-									if (isUnplanned) {
-										ref.read(unplannedTasksProvider.notifier).removeTask(task);
-									} else {
-										ref.read(taskProvider.notifier).removeTask(task);
-									}
+									_showDeleteConfirmation(context);
 								},
 							),
 						],
@@ -112,8 +191,8 @@ class TaskCard extends ConsumerWidget {
 				);
 			},
 		);
-
 	}
+
 
 	Widget _buildOptionTile(
 		BuildContext context, {
@@ -145,44 +224,60 @@ class TaskCard extends ConsumerWidget {
 	}
 
 	@override
-	Widget build(BuildContext context, WidgetRef ref) {
-		final priority = task.priority != null
-				? TaskPriority.values.firstWhere((e) => e.toString() == task.priority)
+	Widget build(BuildContext context) {
+		final priority = widget.task.priority != null
+				? TaskPriority.values.firstWhere((e) => e.toString() == widget.task.priority)
 				: null;
 		final gradientColors = _getPriorityGradient(priority);
 		
-		return AnimatedOpacity(
-			duration: const Duration(milliseconds: 300),
-			opacity: isCompleted ? 0.6 : 1.0,
-			child: GestureDetector(
-				onTap: () => _showOptionsDialog(context, ref),
-				child: Container(
-					decoration: BoxDecoration(
-						gradient: isCompleted ? null : LinearGradient(
-							colors: gradientColors,
-							begin: Alignment.topLeft,
-							end: Alignment.bottomRight,
-						),
-						borderRadius: BorderRadius.circular(16),
-						boxShadow: [
-							BoxShadow(
-								color: gradientColors[0].withOpacity(0.3),
-								blurRadius: 8,
-								offset: const Offset(0, 4),
+		return SlideTransition(
+			position: _slideAnimation,
+			child: FadeTransition(
+				opacity: _fadeAnimation,
+				child: AnimatedOpacity(
+					duration: const Duration(milliseconds: 300),
+					opacity: _isCompleted ? 0.6 : 1.0,
+					child: IgnorePointer(
+						ignoring: _isCompleted,
+						child: GestureDetector(
+							onTap: () => _showOptionsDialog(context, ref),
+				child: Stack(
+					children: [
+						Container(
+							margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+							decoration: BoxDecoration(
+								gradient: _isCompleted 
+									? LinearGradient(
+											colors: [Colors.blue[200]!, Colors.blue[300]!],
+											begin: Alignment.topLeft,
+											end: Alignment.bottomRight,
+										)
+									: LinearGradient(
+											colors: gradientColors,
+											begin: Alignment.topLeft,
+											end: Alignment.bottomRight,
+										),
+								borderRadius: BorderRadius.circular(16),
+								boxShadow: [
+									BoxShadow(
+										color: _isCompleted 
+											? Colors.blue[300]!.withOpacity(0.3)
+											: gradientColors[0].withOpacity(0.3),
+										blurRadius: 8,
+										offset: const Offset(0, 4),
+									),
+								],
 							),
-						],
-					),
-					child: Padding(
-						padding: const EdgeInsets.all(16),
-						child: Column(
-
+							child: Padding(
+								padding: const EdgeInsets.all(16),
+								child: Column(
 									crossAxisAlignment: CrossAxisAlignment.start,
 									children: [
 										Row(
 											children: [
 												Expanded(
 													child: Text(
-														task.title,
+														widget.task.title,
 														style: const TextStyle(
 															fontSize: 18,
 															fontWeight: FontWeight.bold,
@@ -190,7 +285,7 @@ class TaskCard extends ConsumerWidget {
 														),
 													),
 												),
-												if (task.time != null)
+												if (widget.task.time != null)
 													Container(
 														padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
 														decoration: BoxDecoration(
@@ -198,7 +293,7 @@ class TaskCard extends ConsumerWidget {
 															borderRadius: BorderRadius.circular(12),
 														),
 														child: Text(
-															task.time!.format(context),
+															widget.task.time!.format(context),
 															style: const TextStyle(
 																fontSize: 12,
 																fontWeight: FontWeight.w500,
@@ -208,30 +303,30 @@ class TaskCard extends ConsumerWidget {
 													),
 											],
 										),
-										if (task.description.isNotEmpty) ...[
+										if (widget.task.description.isNotEmpty) ...[
 											const SizedBox(height: 8),
 											Text(
-												task.description,
+												widget.task.description,
 												style: TextStyle(
 													fontSize: 14,
 													color: Colors.black87.withOpacity(0.7),
 												),
 											),
 										],
-										if (task.subtasks.isNotEmpty) ...[
+										if (widget.task.subtasks.isNotEmpty) ...[
 											const SizedBox(height: 16),
 											Column(
 												crossAxisAlignment: CrossAxisAlignment.start,
 												children: [
 													LinearProgressIndicator(
-														value: 0.0, // You can add completed subtasks tracking here
+														value: 0.0,
 														backgroundColor: Colors.black12,
 														valueColor: AlwaysStoppedAnimation<Color>(
 															Colors.black.withOpacity(0.5),
 														),
 													),
 													const SizedBox(height: 12),
-													...task.subtasks.map((subtask) => Padding(
+													...widget.task.subtasks.map((subtask) => Padding(
 														padding: const EdgeInsets.only(bottom: 8),
 														child: Row(
 															children: [
@@ -266,9 +361,34 @@ class TaskCard extends ConsumerWidget {
 								),
 							),
 						),
-					),
-				);
-			
-		
+						if (_isCompleted)
+							AnimatedOpacity(
+								duration: const Duration(milliseconds: 300),
+								opacity: _isCompleted ? 1.0 : 0.0,
+								child: Positioned.fill(
+									child: ClipRRect(
+										borderRadius: BorderRadius.circular(16),
+										child: BackdropFilter(
+											filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+											child: Container(
+												color: Colors.blue[100]!.withOpacity(0.3),
+												child: const Center(
+													child: Icon(
+														Icons.check_circle,
+														color: Colors.white,
+														size: 40,
+													),
+												),
+											),
+										),
+									),
+								),
+							),
+					],
+				),
+			),
+      ))));
+
+
 	}
 }
