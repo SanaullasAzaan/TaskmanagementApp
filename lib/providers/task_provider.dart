@@ -23,7 +23,7 @@ class TaskNotifier extends StateNotifier<Map<DateTime, List<Task>>> {
 					.where((t) => t.id != oldTask.id)
 					.toList();
 			
-			// Remove date key if no tasks remain
+			
 			if (updatedState[oldTask.date]!.isEmpty) {
 				updatedState.remove(oldTask.date);
 			}
@@ -37,7 +37,7 @@ class TaskNotifier extends StateNotifier<Map<DateTime, List<Task>>> {
 
 		state = updatedState;
 	}
-
+//// Remove the old task from its date
 	void removeTask(Task task) {
 		final tasks = state[task.date]?.toList() ?? <Task>[];
 		state = {

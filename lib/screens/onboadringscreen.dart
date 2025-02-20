@@ -35,7 +35,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 	@override
 	void initState() {
 		super.initState();
-		// Initialize timer for auto-sliding
 		_timer = Timer.periodic(const Duration(seconds: 3), (Timer timer) {
 			if (_currentPage < _contents.length - 1) {
 				_currentPage++;
@@ -92,7 +91,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 								controller: _pageController,
 								itemCount: _contents.length,
 								onPageChanged: (index) {
-									const NeverScrollableScrollPhysics(); // Disable manual scrolling
+									const NeverScrollableScrollPhysics(); 
 									setState(() {
 										_currentPage = index;
 									});

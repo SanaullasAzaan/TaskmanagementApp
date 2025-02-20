@@ -50,7 +50,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProvid
 
 	Map<DateTime, List<Task>> _groupTasksByDate(List<Task> tasks) {
 		final Map<DateTime, List<Task>> grouped = {};
-		for (var task in tasks) {
+		for (var task in tasks) {//loops
 			final dateKey = DateTime(task.date.year, task.date.month, task.date.day);
 			if (!grouped.containsKey(dateKey)) {
 				grouped[dateKey] = [];

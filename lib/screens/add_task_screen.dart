@@ -203,7 +203,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
 								...TaskPriority.values.map((priority) => InkWell(
 									onTap: () {
 										setState(() {
-											_selectedPriority = priority;
+											_selectedPriority = priority;//Updates _selectedPriority with the chosen priority.
 										});
 										Navigator.pop(context);
 									},
@@ -272,13 +272,6 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
 			}
 		}
 	}
-
-
-
-
-
-
-
 	@override
 	void dispose() {
 		_titleController.dispose();
