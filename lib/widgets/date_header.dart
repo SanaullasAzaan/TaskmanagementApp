@@ -69,7 +69,7 @@ class DateHeader extends ConsumerWidget {
 													fontSize: 18,
 													fontWeight: FontWeight.bold,
 												),
-											),
+											),//Today
 											if (_isSameDay(date, DateTime.now()))
 												Container(
 													padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),

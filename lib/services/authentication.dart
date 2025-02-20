@@ -13,13 +13,10 @@ class AuthMethod {
     String res = "Some error occurred";
     try {
       if (email.isNotEmpty && password.isNotEmpty && name.isNotEmpty) {
-        // Create User
         UserCredential cred = await _auth.createUserWithEmailAndPassword(
           email: email,
           password: password,
         );
-
-        // Store user data in Firestore
         await _firestore.collection("users").doc(cred.user!.uid).set({
           'name': name,
           'uid': cred.user!.uid,

@@ -7,7 +7,6 @@ import '../widgets/date_header.dart';
 import '../widgets/custom_bottom_nav.dart';
 import 'add_task_screen.dart';
 import '../providers/task_provider.dart';
-import '../providers/unplanned_tasks_provider.dart';
 import 'unplanned_task_screen.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
@@ -41,7 +40,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProvid
 			_completedTaskIds[taskId] = true;
 		});
 		_blurAnimationController.forward().then((_) {
-			// After animation completes, you might want to remove the task or update UI
 			Future.delayed(const Duration(milliseconds: 500), () {
 				setState(() {
 					_completedTaskIds.remove(taskId);

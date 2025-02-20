@@ -21,7 +21,7 @@ class _SignupScreenState extends State<SignupScreen> {
 
   void signupUser() async {
     setState(() {
-      isLoading = true; // Show loading before signup
+      isLoading = true; 
     });
 
     String res = await AuthMethod().signupUser(
